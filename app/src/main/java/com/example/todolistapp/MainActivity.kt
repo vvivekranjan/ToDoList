@@ -8,15 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelProvider
-import com.example.todolistapp.ui.screen.HomeScreen
-import com.example.todolistapp.ui.screen.HomeScreenViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.example.todolistapp.ui.theme.ToDoListAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val toDoViewModel = ViewModelProvider(this)[HomeScreenViewModel::class.java]
         enableEdgeToEdge()
         setContent {
             ToDoListAppTheme {
@@ -24,7 +21,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomeScreen(toDoViewModel)
+                    ToDoListApp(LocalContext.current)
                 }
             }
         }

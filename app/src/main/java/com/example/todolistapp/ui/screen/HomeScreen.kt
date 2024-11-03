@@ -50,10 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.todolistapp.R
 import com.example.todolistapp.ui.data.DataItem
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +58,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
-    val todoItems by viewModel.toDoList.observeAsState(emptyList())
+    val toDoList = viewModel.todoList.observeAsState(emptyList())
 
     Scaffold(
         topBar = {
@@ -84,7 +80,7 @@ fun HomeScreen(
         ) {
             AddNewItem(viewModel)
             ListCardItem(
-                listItem = todoItems,
+                listItem = toDoList.value,
                 viewModel = viewModel
             )
         }
@@ -158,7 +154,7 @@ fun AddNewItem(
                 keyboardActions = KeyboardActions(
                     onGo = {
                         newItem = !newItem
-                        viewModel.addItems(text)
+                        viewModel.add(text)
                         text = ""
                     }
                 ),
@@ -182,7 +178,8 @@ fun ListCardItem(
                 items(items = listItem) { item ->
                     ListCard(
                         listItem = item,
-                        onDelete = { viewModel.deleteItems(item.id) }
+                        viewModel = viewModel,
+                        onDelete = { viewModel.delete(item) }
                     )
                 }
             }
@@ -202,6 +199,7 @@ fun ListCardItem(
 @Composable
 fun ListCard(
     listItem: DataItem,
+    viewModel: HomeScreenViewModel,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -213,13 +211,11 @@ fun ListCard(
             .padding(4.dp)
     ) {
         Text(
-            text = SimpleDateFormat(
-                "MMM dd, yyyy hh:mm:ss aa",
-                Locale.ENGLISH
-            ).format(listItem.timeStamp),
+            text = "Added: ${listItem.timeStamp}",
             color = Color.Gray,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
+            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)),
             modifier = Modifier
                 .padding(start = 8.dp)
                 .align(Alignment.Start)
@@ -234,10 +230,10 @@ fun ListCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(
-                    checked = listItem.isChecked.value,
-                    onCheckedChange = { listItem.isChecked.value = !listItem.isChecked.value },
+                    checked = listItem.isChecked,
+                    onCheckedChange = { viewModel.toggleChecked(listItem) },
                 )
-                if(!listItem.isChecked.value){
+                if(!listItem.isChecked){
                     Text(
                         text = listItem.message,
                         textDecoration = TextDecoration.None,
@@ -270,5 +266,5 @@ fun ListCard(
 @Preview(showBackground = true)
 @Composable
 fun ListCardPreview() {
-    ListCard(DataItem(1, stringResource(R.string.clean_the_room), Date.from(Instant.now())), { })
+//    ListCard(DataItem(1, stringResource(R.string.clean_the_room)), { })
 }

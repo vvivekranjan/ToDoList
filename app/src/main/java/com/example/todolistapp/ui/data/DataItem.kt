@@ -1,12 +1,22 @@
 package com.example.todolistapp.ui.data
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import org.jetbrains.annotations.NotNull
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
+
+@Entity(tableName = "todo_table")
 data class DataItem(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)val id: Int = 0,
+    @NotNull
+    @ColumnInfo(name = "message")
     val message: String,
-    val timeStamp: Date,
-    var isChecked: MutableState<Boolean> = mutableStateOf(false)
+    @ColumnInfo(name = "timeStamp")
+    val timeStamp: String = SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa", Locale.getDefault()).format(Date()),
+    @ColumnInfo(name = "isChecked")
+    var isChecked: Boolean = false
 )

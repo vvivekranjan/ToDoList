@@ -1,28 +1,32 @@
 package com.example.todolistapp.ui.screen
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.todolistapp.ui.data.DataItem
-import com.example.todolistapp.ui.data.DataManager
+import com.example.todolistapp.ui.data.DataItemRepository
+import kotlinx.coroutines.launch
 
-class HomeScreenViewModel: ViewModel() {
+class HomeScreenViewModel(private val repository: DataItemRepository) : ViewModel() {
+    val todoList: LiveData<List<DataItem>> = repository.allItems
 
-    private var _uiState = MutableLiveData<List<DataItem>>()
-    val toDoList: LiveData<List<DataItem>> = _uiState
-
-    fun getAllItems() {
-        _uiState.value = DataManager.getAllItems().reversed()
+    fun add(text: String) {
+        viewModelScope.launch {
+            val newItem = DataItem(message = text)
+            repository.insert(newItem)
+        }
     }
 
-    fun addItems(message: String) {
-        DataManager.addItems(message)
-        getAllItems()
+    fun toggleChecked(dataItem: DataItem) {
+        viewModelScope.launch {
+            dataItem.isChecked = !dataItem.isChecked
+            repository.update(dataItem)
+        }
     }
 
-    fun deleteItems(id: Int) {
-        DataManager.deleteItems(id)
-        getAllItems()
+    fun delete(dataItem: DataItem) {
+        viewModelScope.launch {
+            repository.delete(dataItem)
+        }
     }
-
 }
