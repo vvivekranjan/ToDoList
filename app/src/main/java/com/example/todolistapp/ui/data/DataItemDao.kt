@@ -5,7 +5,7 @@ import androidx.room.*
 
 @Dao
 interface DataItemDao {
-    @Query("SELECT * FROM todo_table ORDER BY id DESC")
+    @Query("SELECT * FROM todo_table")
     fun getAllItems(): LiveData<List<DataItem>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -14,6 +14,6 @@ interface DataItemDao {
     @Delete
     suspend fun delete(dataItem: DataItem)
 
-    @Update
-    suspend fun update(dataItem: DataItem)
+    @Query("UPDATE todo_table SET isChecked = :isChecked WHERE id = :id")
+    suspend fun updateCheckedStatus(id: Int, isChecked: Boolean)
 }

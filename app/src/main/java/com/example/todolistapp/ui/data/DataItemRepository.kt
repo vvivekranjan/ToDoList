@@ -14,7 +14,8 @@ class DataItemRepository(private val dataItemDao: DataItemDao) {
         dataItemDao.delete(dataItem)
     }
 
-    suspend fun update(dataItem: DataItem) {
-        dataItemDao.update(dataItem)
+    // New method to update the checkbox state
+    suspend fun updateCheckedStatus(id: Int, isChecked: Boolean) {
+        dataItemDao.updateCheckedStatus(id, isChecked)
     }
 }

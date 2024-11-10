@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -64,8 +65,8 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 title = {
                     Text(stringResource(R.string.app_name))
@@ -78,7 +79,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerpadding)
         ) {
-            AddNewItem(viewModel)
+            AddNewItem(viewModel,Modifier)
             ListCardItem(
                 listItem = toDoList.value,
                 viewModel = viewModel
@@ -114,7 +115,8 @@ fun AddNewItem(
                 defaultElevation = 4.dp
             ),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
             Row(
@@ -173,19 +175,19 @@ fun ListCardItem(
     modifier: Modifier = Modifier
 ) {
     Column {
-        if(listItem.isNotEmpty()) {
+        if (listItem.isNotEmpty()) {
             LazyColumn() {
                 items(items = listItem) { item ->
                     ListCard(
                         listItem = item,
-                        viewModel = viewModel,
+                        onCheckedChange = { viewModel.toggleChecked(item) },
                         onDelete = { viewModel.delete(item) }
                     )
                 }
             }
         } else {
             Text(
-                text = stringResource(R.string.nothing_to_show),
+                text = stringResource(R.string.add_your_schedule),
                 modifier = Modifier
                     .fillMaxWidth(),
                 textAlign = TextAlign.Center,
@@ -199,7 +201,7 @@ fun ListCardItem(
 @Composable
 fun ListCard(
     listItem: DataItem,
-    viewModel: HomeScreenViewModel,
+    onCheckedChange: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -215,7 +217,11 @@ fun ListCard(
             color = Color.Gray,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
-            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)),
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = 0.6f
+                )
+            ),
             modifier = Modifier
                 .padding(start = 8.dp)
                 .align(Alignment.Start)
@@ -231,9 +237,9 @@ fun ListCard(
             ) {
                 Checkbox(
                     checked = listItem.isChecked,
-                    onCheckedChange = { viewModel.toggleChecked(listItem) },
+                    onCheckedChange = { onCheckedChange() },
                 )
-                if(!listItem.isChecked){
+                if (!listItem.isChecked) {
                     Text(
                         text = listItem.message,
                         textDecoration = TextDecoration.None,
@@ -266,5 +272,5 @@ fun ListCard(
 @Preview(showBackground = true)
 @Composable
 fun ListCardPreview() {
-//    ListCard(DataItem(1, stringResource(R.string.clean_the_room)), { })
+    ListCard(DataItem(1, stringResource(R.string.clean_the_room)), { }, { })
 }

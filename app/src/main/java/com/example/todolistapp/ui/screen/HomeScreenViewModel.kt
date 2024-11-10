@@ -17,10 +17,10 @@ class HomeScreenViewModel(private val repository: DataItemRepository) : ViewMode
         }
     }
 
+    // Toggle the checked status
     fun toggleChecked(dataItem: DataItem) {
         viewModelScope.launch {
-            dataItem.isChecked = !dataItem.isChecked
-            repository.update(dataItem)
+            repository.updateCheckedStatus(dataItem.id, !dataItem.isChecked)
         }
     }
 
