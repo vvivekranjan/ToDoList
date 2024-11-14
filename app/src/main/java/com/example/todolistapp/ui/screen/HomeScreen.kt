@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
@@ -24,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -34,14 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Blue
-import androidx.compose.ui.graphics.Color.Companion.DarkGray
-import androidx.compose.ui.graphics.Color.Companion.Green
-import androidx.compose.ui.graphics.Color.Companion.Magenta
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.graphics.Color.Companion.Yellow
+import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -69,7 +67,7 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
+                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
                 title = {
                     Text(
                         text = stringResource(R.string.app_name),
@@ -81,27 +79,50 @@ fun HomeScreen(
                 }
             )
         },
-    ) { innerpadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerpadding)
-        ) {
-            ListCardItem(
-                listItem = toDoList.value,
-                viewModel = viewModel,
+        content = { innerPadding ->
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-            )
-            AddNewItem(
-                viewModel = viewModel,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .background(color = MaterialTheme.colorScheme.background)
-            )
-        }
-    }
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                if (toDoList.value.isEmpty()) {
+                    // Display message when there are no items
+                    Text(
+                        text = stringResource(R.string.add_your_schedule),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 32.sp,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(bottom = 80.dp) // Space for the button at the bottom
+                    )
+                } else {
+                    // Display the list of items
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 80.dp) // Leave space for the button
+                    ) {
+                        items(toDoList.value) { item ->
+                            ListCard(
+                                listItem = item,
+                                onCheckedChange = { viewModel.toggleChecked(item) },
+                                onDelete = { viewModel.delete(item) }
+                            )
+                        }
+                    }
+                }
 
+                // Add New Item button fixed at the bottom of the screen
+                AddNewItem(
+                    viewModel = viewModel,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -112,12 +133,6 @@ fun AddNewItem(
 
     var newItem by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
-    val rainbowColors = listOf(Magenta, Yellow, Green, Blue)
-    val brush = remember {
-        Brush.linearGradient(
-            colors = rainbowColors
-        )
-    }
 
     Column(
         modifier = modifier
@@ -130,7 +145,6 @@ fun AddNewItem(
                 onValueChange = { text = it },
                 label = { Text(stringResource(R.string.new_item), fontSize = 24.sp) },
                 textStyle = TextStyle(
-                    brush = brush,
                     fontSize = 24.sp
                 ),
                 trailingIcon = {
@@ -142,10 +156,10 @@ fun AddNewItem(
                         },
                         enabled = text.isNotEmpty(),
                         colors = IconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            containerColor = MaterialTheme.colorScheme.onBackground,
                             contentColor = MaterialTheme.colorScheme.surface,
-                            disabledContainerColor = DarkGray,
-                            disabledContentColor = White
+                            disabledContainerColor = Gray,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier
                             .padding(4.dp)
@@ -154,7 +168,7 @@ fun AddNewItem(
                         Icon(
                             painter = painterResource(R.drawable.ic_up),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.surface
                         )
                     }
                 },
@@ -202,43 +216,14 @@ fun AddNewItem(
 }
 
 @Composable
-fun ListCardItem(
-    listItem: List<DataItem>,
-    viewModel: HomeScreenViewModel,
-    modifier: Modifier = Modifier
-) {
-    if (listItem.isNotEmpty()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            items(items = listItem) { item ->
-                ListCard(
-                    listItem = item,
-                    onCheckedChange = { viewModel.toggleChecked(item) },
-                    onDelete = { viewModel.delete(item) }
-                )
-            }
-        }
-    } else {
-        Text(
-            text = stringResource(R.string.add_your_schedule),
-            modifier = modifier
-                .fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 32.sp
-        )
-    }
-}
-
-@Composable
 fun ListCard(
     listItem: DataItem,
     onCheckedChange: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .padding(horizontal = 4.dp, vertical = 2.dp)
@@ -291,7 +276,13 @@ fun ListCard(
                 }
             }
             IconButton(
-                onClick = onDelete,
+                onClick = {
+                    if(!listItem.isChecked) {
+                        showDeleteDialog = true
+                    } else {
+                        onDelete()
+                    }
+                },
                 modifier = Modifier
                     .padding(4.dp)
             ) {
@@ -303,6 +294,53 @@ fun ListCard(
         }
         HorizontalDivider(thickness = 2.dp)
     }
+
+    if(showDeleteDialog) {
+        MyAlertMessage(
+            onDismissRequest = { showDeleteDialog = false },
+            onConfirmation = onDelete
+        )
+    }
+
+}
+
+@Composable
+fun MyAlertMessage(
+    onDismissRequest: () -> Unit,
+    onConfirmation: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AlertDialog(
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+            )
+        },
+        title = {
+            Text("Confirmation Request")
+        },
+        text = {
+            Text("Are you really want to delete this item without checking it off?")
+        },
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(
+                onClick = onConfirmation
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                }
+            ) {
+                Text("Dismiss")
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
