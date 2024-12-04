@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,29 +56,18 @@ import androidx.compose.ui.unit.sp
 import com.example.todolistapp.R
 import com.example.todolistapp.ui.data.DataItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel,
     modifier: Modifier = Modifier
 ) {
     val toDoList = viewModel.todoList.observeAsState(emptyList())
+    var deleteAllDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp
-                        )
-                    )
+            TopBar(
+                onDeleteAllClick = {
+                    deleteAllDialog = true
                 }
             )
         },
@@ -123,6 +115,17 @@ fun HomeScreen(
             }
         }
     )
+    if(deleteAllDialog && toDoList.value.isNotEmpty()) {
+        DeleteAllAlertMessage(
+            onDismissRequest = { deleteAllDialog = false },
+            onConfirmation = {
+                viewModel.deleteAll()
+                deleteAllDialog = false
+            }
+        )
+    } else {
+        deleteAllDialog = false
+    }
 }
 
 @Composable
@@ -224,84 +227,100 @@ fun ListCard(
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier
-            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .fillMaxWidth()
+            .height(80.dp)
+            .padding(8.dp)
     ) {
-        Text(
-            text = "Added: ${listItem.timeStamp}",
-            color = Color.Gray,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onSurface.copy(
-                    alpha = 0.6f
-                )
-            ),
+        // Priority Color Strip
+        Box(
             modifier = Modifier
-                .padding(start = 16.dp)
-                .align(Alignment.Start)
+                .width(8.dp)
+                .fillMaxHeight()
+                .background(Color.Green)
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+
+        Column(
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .padding(horizontal = 4.dp, vertical = 2.dp)
         ) {
-            Checkbox(
-                checked = listItem.isChecked,
-                onCheckedChange = { onCheckedChange() },
+            Text(
+                text = "Added: ${listItem.timeStamp}",
+                color = Gray,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(
+                        alpha = 0.6f
+                    )
+                ),
                 modifier = Modifier
-                    .padding(2.dp)
+                    .padding(start = 16.dp)
+                    .align(Alignment.Start)
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                    .fillMaxWidth(1f)
             ) {
-                if (!listItem.isChecked) {
-                    Text(
-                        text = listItem.message,
-                        textDecoration = TextDecoration.None,
-                        modifier = Modifier
-                            .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
-                    )
-                } else {
-                    Text(
-                        text = listItem.message,
-                        textDecoration = TextDecoration.LineThrough,
-                        modifier = Modifier
-                            .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
+                Checkbox(
+                    checked = listItem.isChecked,
+                    onCheckedChange = { onCheckedChange() },
+                    modifier = Modifier
+                        .padding(2.dp)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                ) {
+                    if (!listItem.isChecked) {
+                        Text(
+                            text = listItem.message,
+                            textDecoration = TextDecoration.None,
+                            modifier = Modifier
+                                .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
+                        )
+                    } else {
+                        Text(
+                            text = listItem.message,
+                            textDecoration = TextDecoration.LineThrough,
+                            modifier = Modifier
+                                .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = {
+                        if (!listItem.isChecked) {
+                            showDeleteDialog = true
+                        } else {
+                            onDelete()
+                        }
+                    },
+                    modifier = Modifier
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = null
                     )
                 }
             }
-            IconButton(
-                onClick = {
-                    if(!listItem.isChecked) {
-                        showDeleteDialog = true
-                    } else {
-                        onDelete()
-                    }
-                },
-                modifier = Modifier
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete),
-                    contentDescription = null
-                )
-            }
+            HorizontalDivider(thickness = 2.dp)
         }
-        HorizontalDivider(thickness = 2.dp)
     }
-
-    if(showDeleteDialog) {
+    if (showDeleteDialog) {
         MyAlertMessage(
             onDismissRequest = { showDeleteDialog = false },
-            onConfirmation = onDelete
+            onConfirmation = {
+                onDelete()
+                showDeleteDialog = false
+            }
         )
     }
-
 }
 
 @Composable
@@ -341,6 +360,88 @@ fun MyAlertMessage(
             }
         }
     )
+}
+
+@Composable
+fun DeleteAllAlertMessage(
+    onDismissRequest: () -> Unit,
+    onConfirmation: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AlertDialog(
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+            )
+        },
+        title = {
+            Text("Confirmation Request")
+        },
+        text = {
+            Text("Are you really want to delete these item?")
+        },
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(
+                onClick = onConfirmation
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                }
+            ) {
+                Text("Dismiss")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBar(
+    onDeleteAllClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Add your delete-all icon
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+        title = {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+            )
+        },
+        actions = {
+            IconButton(
+                onClick = { onDeleteAllClick() },
+                modifier = Modifier
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete_all), // Add your delete-all icon
+                    contentDescription = null
+                )
+            }
+        }
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TopBarPreview() {
+    TopBar({ })
 }
 
 @Preview(showBackground = true)

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolistapp.ui.data.DataItem
 import com.example.todolistapp.ui.data.DataItemRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeScreenViewModel(private val repository: DataItemRepository) : ViewModel() {
@@ -27,6 +28,13 @@ class HomeScreenViewModel(private val repository: DataItemRepository) : ViewMode
     fun delete(dataItem: DataItem) {
         viewModelScope.launch {
             repository.delete(dataItem)
+        }
+    }
+
+    fun deleteAll() {
+        viewModelScope.launch {
+            delay(300)
+            repository.deleteAll()
         }
     }
 }

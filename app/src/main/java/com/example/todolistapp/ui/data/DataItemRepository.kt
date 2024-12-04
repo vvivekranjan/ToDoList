@@ -18,4 +18,8 @@ class DataItemRepository(private val dataItemDao: DataItemDao) {
     suspend fun updateCheckedStatus(id: Int, isChecked: Boolean) {
         dataItemDao.updateCheckedStatus(id, isChecked)
     }
+
+    suspend fun deleteAll() {
+        dataItemDao.deleteAll()
+    }
 }

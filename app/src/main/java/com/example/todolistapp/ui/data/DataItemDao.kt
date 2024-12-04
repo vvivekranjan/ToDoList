@@ -16,4 +16,7 @@ interface DataItemDao {
 
     @Query("UPDATE todo_table SET isChecked = :isChecked WHERE id = :id")
     suspend fun updateCheckedStatus(id: Int, isChecked: Boolean)
+
+    @Query("DELETE FROM todo_table")
+    suspend fun deleteAll()
 }
