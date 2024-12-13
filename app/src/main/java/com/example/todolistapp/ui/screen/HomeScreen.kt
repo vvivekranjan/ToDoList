@@ -1,6 +1,7 @@
 package com.example.todolistapp.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.todolistapp.R
 import com.example.todolistapp.ui.data.DataItem
+import com.example.todolistapp.ui.data.Priority
 
 @Composable
 fun HomeScreen(
@@ -115,7 +118,7 @@ fun HomeScreen(
             }
         }
     )
-    if(deleteAllDialog && toDoList.value.isNotEmpty()) {
+    if (deleteAllDialog && toDoList.value.isNotEmpty()) {
         DeleteAllAlertMessage(
             onDismissRequest = { deleteAllDialog = false },
             onConfirmation = {
@@ -136,6 +139,7 @@ fun AddNewItem(
 
     var newItem by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var selectedPriority by remember { mutableStateOf(Priority.LOW) }
 
     Column(
         modifier = modifier
@@ -150,10 +154,39 @@ fun AddNewItem(
                 textStyle = TextStyle(
                     fontSize = 24.sp
                 ),
+                leadingIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable {
+                                // Cycle through priority levels
+                                selectedPriority = when (selectedPriority) {
+                                    Priority.LOW -> Priority.MEDIUM
+                                    Priority.MEDIUM -> Priority.HIGH
+                                    Priority.HIGH -> Priority.LOW
+                                }
+                            }
+                            .background(
+                                color = when (selectedPriority) {
+                                    Priority.HIGH -> Color.Red
+                                    Priority.MEDIUM -> Color.Yellow
+                                    Priority.LOW -> Color.Green
+                                },
+                                shape = CircleShape
+                            )
+                    )
+                },
                 trailingIcon = {
                     IconButton(
                         onClick = {
-                            viewModel.add(text)
+                            viewModel.add(
+                                text = text,
+                                priority = when (selectedPriority) {
+                                    Priority.HIGH -> "HIGH"
+                                    Priority.MEDIUM -> "MEDIUM"
+                                    Priority.LOW -> "LOW"
+                                }
+                            )
                             newItem = !newItem
                             text = ""
                         },
@@ -238,7 +271,13 @@ fun ListCard(
             modifier = Modifier
                 .width(8.dp)
                 .fillMaxHeight()
-                .background(Color.Green)
+                .background(
+                    color = when (listItem.priority) {
+                        "HIGH" -> Color.Red
+                        "MEDIUM" -> Color.Yellow
+                        else -> Color.Green
+                    },
+                )
         )
 
         Column(
@@ -276,21 +315,11 @@ fun ListCard(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                 ) {
-                    if (!listItem.isChecked) {
-                        Text(
-                            text = listItem.message,
-                            textDecoration = TextDecoration.None,
-                            modifier = Modifier
-                                .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
-                        )
-                    } else {
-                        Text(
-                            text = listItem.message,
-                            textDecoration = TextDecoration.LineThrough,
-                            modifier = Modifier
-                                .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
-                        )
-                    }
+                    Text(
+                        text = listItem.message,
+                        textDecoration = if (listItem.isChecked) TextDecoration.LineThrough else TextDecoration.None,
+                        modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
+                    )
                 }
                 IconButton(
                     onClick = {
@@ -447,5 +476,5 @@ fun TopBarPreview() {
 @Preview(showBackground = true)
 @Composable
 fun ListCardPreview() {
-    ListCard(DataItem(1, stringResource(R.string.clean_the_room)), { }, { })
+    ListCard(DataItem(1, stringResource(R.string.clean_the_room), priority = "MEDIUM"), { }, { })
 }

@@ -11,9 +11,9 @@ import kotlinx.coroutines.launch
 class HomeScreenViewModel(private val repository: DataItemRepository) : ViewModel() {
     val todoList: LiveData<List<DataItem>> = repository.allItems
 
-    fun add(text: String) {
+    fun add(text: String, priority: String) {
         viewModelScope.launch {
-            val newItem = DataItem(message = text)
+            val newItem = DataItem(message = text, priority = priority)
             repository.insert(newItem)
         }
     }
