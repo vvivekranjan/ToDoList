@@ -1,5 +1,7 @@
 package com.example.todolistapp.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +22,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,12 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -89,14 +90,12 @@ fun HomeScreen(
                         fontSize = 32.sp,
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(bottom = 80.dp) // Space for the button at the bottom
                     )
                 } else {
                     // Display the list of items
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = 80.dp) // Leave space for the button
                     ) {
                         items(toDoList.value) { item ->
                             ListCard(
@@ -113,7 +112,6 @@ fun HomeScreen(
                     viewModel = viewModel,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.background)
                 )
             }
         }
@@ -141,12 +139,20 @@ fun AddNewItem(
     var text by remember { mutableStateOf("") }
     var selectedPriority by remember { mutableStateOf(Priority.LOW) }
 
-    Column(
+    // Rotation animation
+    val rotation by animateFloatAsState(
+        targetValue = if (newItem) -45f else 0f,
+        label = "FAB Rotation"
+    )
+
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(4.dp)
+            .padding(4.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.End
     ) {
-        if (newItem) {
+        AnimatedVisibility(visible = newItem) {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -208,45 +214,29 @@ fun AddNewItem(
                         )
                     }
                 },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(40.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
+                    .fillMaxWidth(0.8f)
+                    .align(Alignment.Bottom)
+                    .background(MaterialTheme.colorScheme.background)
             )
         }
-        ElevatedCard(
-            onClick = { newItem = !newItem },
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 8.dp
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary
-            ),
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.padding(4.dp)
+        // Floating Action Button with rotation
+        FloatingActionButton(
+            onClick = {
+                newItem = !newItem // Toggle visibility
+            },
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .padding(horizontal = 6.dp, vertical = 8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_add),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(28.dp)
-                )
-                Text(
-                    text = "Add New Item",
-                    fontFamily = FontFamily.SansSerif,
-                    fontSize = 24.sp,
-                    modifier = Modifier
-                        .padding(8.dp)
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_add),
+                contentDescription = null,
+                modifier = Modifier.rotate(rotation) // Rotate icon
+            )
         }
     }
 }
