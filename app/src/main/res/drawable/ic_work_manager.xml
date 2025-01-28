@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background Circle -->
+    <!-- Dark Blue-Gray Background -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M54,2C82.6,2 106,25.4 106,54C106,82.6 82.6,106 54,106C25.4,106 2,82.6 2,54C2,25.4 25.4,2 54,2Z" />
+
+    <!-- Briefcase -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M27,38L81,38L81,67L27,67Z" />
+
+    <!-- Briefcase Handle -->
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M35,29L73,29L73,38L35,38Z" />
+
+    <!-- Checkmark -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M43,56L51,64L65,50"
+        android:strokeWidth="6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

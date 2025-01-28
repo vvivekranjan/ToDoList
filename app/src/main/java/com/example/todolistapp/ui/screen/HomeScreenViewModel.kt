@@ -5,18 +5,40 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolistapp.ui.data.DataItem
 import com.example.todolistapp.ui.data.DataItemRepository
+import com.example.todolistapp.ui.data.RecycleRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class HomeScreenViewModel(private val repository: DataItemRepository) : ViewModel() {
-    val todoList: LiveData<List<DataItem>> = repository.allItems
+sealed class Screen(val route: String) {
+    object Home : Screen("home")
+    object RecycleBin : Screen("recycle_bin")
+//    object AddTaskList : Screen("work_list/{workListId}") {
+//        fun createRoute(workListId: Int) = "work_list/$workListId"
+//    }
+}
 
-    fun add(text: String, priority: String) {
+class HomeScreenViewModel(
+    private val repository: DataItemRepository,
+    private val binRepository: RecycleRepository
+) : ViewModel() {
+    val workList: LiveData<List<DataItem>> = repository.allItems
+
+    fun add(text: String, priority: String, deadLine: String) {
         viewModelScope.launch {
-            val newItem = DataItem(message = text, priority = priority)
+            val newItem = DataItem(
+                message = text,
+                priority = priority,
+                deadLine = deadLine
+            )
             repository.insert(newItem)
         }
     }
+
+//    fun insert(dataItem: WorkList) {
+//        viewModelScope.launch {
+//            workListDao.insert(dataItem)
+//        }
+//    }
 
     // Toggle the checked status
     fun toggleChecked(dataItem: DataItem) {
@@ -27,6 +49,8 @@ class HomeScreenViewModel(private val repository: DataItemRepository) : ViewMode
 
     fun delete(dataItem: DataItem) {
         viewModelScope.launch {
+            delay(300)
+            RecycleBinViewModel(binRepository).insert(dataItem)
             repository.delete(dataItem)
         }
     }
@@ -34,7 +58,9 @@ class HomeScreenViewModel(private val repository: DataItemRepository) : ViewMode
     fun deleteAll() {
         viewModelScope.launch {
             delay(300)
+            workList.value?.let { RecycleBinViewModel(binRepository).insert(it) }
             repository.deleteAll()
         }
     }
 }
+

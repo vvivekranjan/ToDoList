@@ -1,6 +1,9 @@
 <resources>
-    <string name="app_name">To Do List App</string>
+    <string name="app_name">Work Manager</string>
+    <string name="sub_title">Manage your %s efficiently</string>
     <string name="new_item">New Item</string>
     <string name="clean_the_room">Clean the room.</string>
     <string name="add_your_schedule">Add Your Schedule</string>
+    <string name="recycle_bin">Bin Manager</string>
+    <string name="clean_bin">Bin is Clean</string>
 </resources>

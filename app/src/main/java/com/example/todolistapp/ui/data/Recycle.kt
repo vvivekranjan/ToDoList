@@ -7,23 +7,19 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@Entity(tableName = "todo_table")
-data class DataItem(
+@Entity(tableName = "recycle_table")
+data class Recycle(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo(name = "message")
     val message: String,
     @ColumnInfo(name = "timeStamp")
-    val timeStamp: String = SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa", Locale.getDefault()).format(Date()),
+    val timeStamp: String = SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa", Locale.getDefault()).format(
+        Date()
+    ),
     @ColumnInfo(name = "isChecked")
     var isChecked: Boolean = false,
-    @ColumnInfo(name = "priority", defaultValue = "LOW")
+    @ColumnInfo(name = "priority")
     val priority: String,
     @ColumnInfo(name = "deadLine")
     val deadLine: String?
 )
-
-enum class Priority {
-    HIGH,
-    MEDIUM,
-    LOW
-}

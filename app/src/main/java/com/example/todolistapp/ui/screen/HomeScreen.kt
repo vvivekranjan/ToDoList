@@ -1,5 +1,6 @@
 package com.example.todolistapp.ui.screen
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -19,34 +20,34 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Gray
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -59,28 +60,82 @@ import androidx.compose.ui.unit.sp
 import com.example.todolistapp.R
 import com.example.todolistapp.ui.data.DataItem
 import com.example.todolistapp.ui.data.Priority
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.util.Date
 
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel,
+    onNavigateToRecycleBin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val toDoList = viewModel.todoList.observeAsState(emptyList())
-    var deleteAllDialog by remember { mutableStateOf(false) }
-    Scaffold(
-        topBar = {
-            TopBar(
-                onDeleteAllClick = {
-                    deleteAllDialog = true
-                }
+
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        ModalNavigationDrawer(
+            modifier = Modifier
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.background),
+            drawerState = drawerState,
+            drawerContent = {
+                NavigationDrawer(
+                    onNavigateToCurrentList = {
+                        scope.launch {
+                            drawerState.close()
+                        }
+                    },
+                    onNavigateToRecycleBin = onNavigateToRecycleBin,
+                    drawerState = drawerState
+                )
+            },
+        ) {
+            DefaultList(
+                viewModel = viewModel,
+                drawerState = drawerState
             )
-        },
-        content = { innerPadding ->
+        }
+    }
+
+    
+}
+
+@Composable
+fun DefaultList(
+    viewModel: HomeScreenViewModel,
+    drawerState: DrawerState,
+    modifier: Modifier = Modifier
+) {
+
+    val toDoList = viewModel.workList.observeAsState(emptyList())
+    var deleteAllDialog by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    onDeleteAllClick = {
+                        deleteAllDialog = true
+                    },
+                    title = stringResource(R.string.app_name),
+                    subtitle = stringResource(R.string.sub_title, "tasks"),
+                    drawerState = drawerState
+                )
+            },
+        ) { innerPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
+
+                DarkBackground()
+
                 if (toDoList.value.isEmpty()) {
                     // Display message when there are no items
                     Text(
@@ -111,11 +166,12 @@ fun HomeScreen(
                 AddNewItem(
                     viewModel = viewModel,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                        .align(Alignment.BottomEnd)
                 )
             }
         }
-    )
+    }
+
     if (deleteAllDialog && toDoList.value.isNotEmpty()) {
         DeleteAllAlertMessage(
             onDismissRequest = { deleteAllDialog = false },
@@ -135,9 +191,22 @@ fun AddNewItem(
     modifier: Modifier = Modifier
 ) {
 
+    val context = LocalContext.current
     var newItem by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var taskDeadline by remember { mutableStateOf("") }
     var selectedPriority by remember { mutableStateOf(Priority.LOW) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+//    if (showDatePicker) {
+//        DatePickerDialog(
+//            onDateSelected = { selectedDate ->
+//                taskDeadline = selectedDate
+//                showDatePicker = false
+//            },
+//            onDismissRequest = { showDatePicker = false }
+//        )
+//    }
 
     // Rotation animation
     val rotation by animateFloatAsState(
@@ -148,7 +217,7 @@ fun AddNewItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(horizontal = 2.dp),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.End
     ) {
@@ -156,9 +225,14 @@ fun AddNewItem(
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text(stringResource(R.string.new_item), fontSize = 24.sp) },
+                label = {
+                    Text(
+                        text = stringResource(R.string.new_item),
+                        fontSize = 18.sp
+                    )
+                },
                 textStyle = TextStyle(
-                    fontSize = 24.sp
+                    fontSize = 18.sp
                 ),
                 leadingIcon = {
                     Box(
@@ -167,22 +241,40 @@ fun AddNewItem(
                             .clickable {
                                 // Cycle through priority levels
                                 selectedPriority = when (selectedPriority) {
-                                    Priority.LOW -> Priority.MEDIUM
-                                    Priority.MEDIUM -> Priority.HIGH
-                                    Priority.HIGH -> Priority.LOW
+                                    Priority.LOW -> Priority.HIGH
+                                    Priority.HIGH -> Priority.MEDIUM
+                                    Priority.MEDIUM -> Priority.LOW
                                 }
+                                // Show Toast for priority change
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Priority set to ${selectedPriority.name}",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                    .show()
                             }
                             .background(
                                 color = when (selectedPriority) {
-                                    Priority.HIGH -> Color.Red
-                                    Priority.MEDIUM -> Color.Yellow
-                                    Priority.LOW -> Color.Green
+                                    Priority.HIGH -> Color(0xFFD32F2F)
+                                    Priority.MEDIUM -> Color(0xFFFBC02D)
+                                    Priority.LOW -> Color(0xFF388E3C)
                                 },
                                 shape = CircleShape
                             )
                     )
                 },
                 trailingIcon = {
+//                    IconButton(
+//                            onClick = { showDatePicker = true }
+//                        ) {
+//                            Icon(
+//                                Icons.Default.DateRange,
+//                                contentDescription = null,
+//                                modifier = Modifier
+//                                    .size(20.dp)
+//                            )
+//                        }
                     IconButton(
                         onClick = {
                             viewModel.add(
@@ -191,7 +283,8 @@ fun AddNewItem(
                                     Priority.HIGH -> "HIGH"
                                     Priority.MEDIUM -> "MEDIUM"
                                     Priority.LOW -> "LOW"
-                                }
+                                },
+                                deadLine = String.format("MMM dd, yyyy hh:mm:ss aa", taskDeadline)
                             )
                             newItem = !newItem
                             text = ""
@@ -217,8 +310,7 @@ fun AddNewItem(
                 shape = RoundedCornerShape(40.dp),
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .align(Alignment.Bottom)
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(Color(0xFF121212))
             )
         }
         // Floating Action Button with rotation
@@ -230,7 +322,7 @@ fun AddNewItem(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier
-                .padding(horizontal = 6.dp, vertical = 8.dp)
+                .padding(4.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_add),
@@ -263,9 +355,9 @@ fun ListCard(
                 .fillMaxHeight()
                 .background(
                     color = when (listItem.priority) {
-                        "HIGH" -> Color.Red
-                        "MEDIUM" -> Color.Yellow
-                        else -> Color.Green
+                        "HIGH" -> Color(0xFFD32F2F)
+                        "MEDIUM" -> Color(0xFFFBC02D)
+                        else -> Color(0xFF388E3C)
                     },
                 )
         )
@@ -328,6 +420,22 @@ fun ListCard(
                     )
                 }
             }
+//            listItem.deadLine?.let {
+//                Text(
+//                    text = "Deadline: ${listItem.deadLine}",
+//                    color = Gray,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 12.sp,
+//                    style = MaterialTheme.typography.bodySmall.copy(
+//                        color = MaterialTheme.colorScheme.onSurface.copy(
+//                            alpha = 0.6f
+//                        )
+//                    ),
+//                    modifier = Modifier
+//                        .padding(start = 16.dp)
+//                        .align(Alignment.Start)
+//                )
+//            }
             HorizontalDivider(thickness = 2.dp)
         }
     }
@@ -342,129 +450,37 @@ fun ListCard(
     }
 }
 
-@Composable
-fun MyAlertMessage(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    AlertDialog(
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-            )
-        },
-        title = {
-            Text("Confirmation Request")
-        },
-        text = {
-            Text("Are you really want to delete this item without checking it off?")
-        },
-        onDismissRequest = onDismissRequest,
-        confirmButton = {
-            TextButton(
-                onClick = onConfirmation
-            ) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onDismissRequest()
-                }
-            ) {
-                Text("Dismiss")
-            }
-        }
-    )
-}
-
-@Composable
-fun DeleteAllAlertMessage(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    AlertDialog(
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-            )
-        },
-        title = {
-            Text("Confirmation Request")
-        },
-        text = {
-            Text("Are you really want to delete these item?")
-        },
-        onDismissRequest = onDismissRequest,
-        confirmButton = {
-            TextButton(
-                onClick = onConfirmation
-            ) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onDismissRequest()
-                }
-            ) {
-                Text("Dismiss")
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopBar(
-    onDeleteAllClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Add your delete-all icon
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
-        title = {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
-                )
-            )
-        },
-        actions = {
-            IconButton(
-                onClick = { onDeleteAllClick() },
-                modifier = Modifier
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete_all), // Add your delete-all icon
-                    contentDescription = null
-                )
-            }
-        }
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TopBarPreview() {
-    TopBar({ })
-}
+//@Composable
+//fun DatePickerDialog(
+//    onDateSelected: (String) -> Unit,
+//    onDismissRequest: () -> Unit
+//) {
+//    val context = LocalContext.current
+//    val calendar = Calendar.getInstance()
+//
+//    val datePickerDialog = DatePickerDialog(
+//        context,
+//        { _, year, month, dayOfMonth ->
+//            val selectedDate = String.format("%02d/%03d/%04d", dayOfMonth, month + 1, year)
+//            onDateSelected(selectedDate)
+//        },
+//        calendar.get(Calendar.YEAR),
+//        calendar.get(Calendar.MONTH),
+//        calendar.get(Calendar.DAY_OF_MONTH)
+//    )
+//
+//    LaunchedEffect(Unit) {
+//        datePickerDialog.show()
+//    }
+//
+//    DisposableEffect(Unit) {
+//        onDispose { datePickerDialog.dismiss() }
+//    }
+//}
 
 @Preview(showBackground = true)
 @Composable
 fun ListCardPreview() {
-    ListCard(DataItem(1, stringResource(R.string.clean_the_room), priority = "MEDIUM"), { }, { })
+    ListCard(DataItem(1, stringResource(R.string.clean_the_room), priority = "MEDIUM", deadLine = Date.from(
+        Instant.now()).toString()), { }, { })
 }

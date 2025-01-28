@@ -5,8 +5,11 @@ import androidx.room.*
 
 @Dao
 interface DataItemDao {
-    @Query("SELECT * FROM todo_table")
-    fun getAllItems(): LiveData<List<DataItem>>
+    @Query("""SELECT * FROM todo_table ORDER BY CASE 
+            WHEN priority = 'HIGH' THEN 1
+            WHEN priority = 'MEDIUM' THEN 2
+            ELSE 3 END""")
+    fun getTasksSortedByPriority(): LiveData<List<DataItem>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(dataItem: DataItem)

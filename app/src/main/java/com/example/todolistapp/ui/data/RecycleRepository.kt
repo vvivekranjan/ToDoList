@@ -2,19 +2,18 @@ package com.example.todolistapp.ui.data
 
 import androidx.lifecycle.LiveData
 
-class DataItemRepository(private val dataItemDao: DataItemDao) {
+class RecycleRepository(private val dataItemDao: RecycleDao) {
 
-    val allItems: LiveData<List<DataItem>> = dataItemDao.getTasksSortedByPriority()
+    val allItems: LiveData<List<Recycle>> = dataItemDao.getTasksSortedByPriority()
 
-    suspend fun insert(dataItem: DataItem) {
+    suspend fun insert(dataItem: Recycle) {
         dataItemDao.insert(dataItem)
     }
 
-    suspend fun delete(dataItem: DataItem) {
+    suspend fun delete(dataItem: Recycle) {
         dataItemDao.delete(dataItem)
     }
 
-    // New method to update the checkbox state
     suspend fun updateCheckedStatus(id: Int, isChecked: Boolean) {
         dataItemDao.updateCheckedStatus(id, isChecked)
     }
